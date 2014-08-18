@@ -10,6 +10,8 @@ GLOBALS['canvas_height'] = window.innerHeight -
 // wait time between updates
 GLOBALS['interval'] = 200;
 GLOBALS['interval_id'] = null;
+GLOBALS['birth'] = [3];
+GLOBALS['survive'] = [2, 3]
 
 
 // add canvas to the page
@@ -123,12 +125,13 @@ function update(cells) {
                 live_neighbors--; // we double counted this one
 
                 // cell dies in next generation
-                if (live_neighbors !== 2 && live_neighbors !== 3) {
+                if (GLOBALS['survive'].indexOf(live_neighbors) == -1) {
                     cells[i][j] = 0;
                 }
+                
             } else {
                 // dead cell comes back to life
-                if (live_neighbors === 3) {
+                if (GLOBALS['birth'].indexOf(live_neighbors) != -1) {
                     cells[i][j] = 1;
                 }
             }
@@ -174,12 +177,19 @@ function show_help() {
     div.innerHTML = '<p>Press &lt;space&gt; to pause/unpause.</p>';
     div.innerHTML += '<p>Press &lt;n&gt; to step while paused.</p>';
     div.innerHTML += '<p>Press &lt;r&gt; to reset the simulation.</p>';
+    div.innerHTML += '<p>Enter a GOLLY code</p><textarea id="golly" onkeyup="textBoxChanged(event)"></textarea>';
 
     document.body.appendChild(div);
 
     window.setTimeout(clear_help, 5000);
 }
 
+function reset() {
+    window.clearInterval(GLOBALS['interval_id']);
+        init_sim();
+        GLOBALS['interval_id'] = window.setInterval(run_sim,
+                                                    GLOBALS['interval']);
+}
 
 function on_key_press(event) {
     var key = String.fromCharCode(event.charCode);
@@ -200,10 +210,7 @@ function on_key_press(event) {
 
     // r for reset
     } else if (key === 'r') {
-        window.clearInterval(GLOBALS['interval_id']);
-        init_sim();
-        GLOBALS['interval_id'] = window.setInterval(run_sim,
-                                                    GLOBALS['interval']);
+        reset();
 
     // ? for help
     } else if (key === '?') {
@@ -211,6 +218,18 @@ function on_key_press(event) {
     }
 }
 
+function textBoxChanged(event) {
+    if(event.keyCode == 13){
+        // Look for golly code
+        textBox = document.getElementById("golly");
+        if (textBox != null) {
+            split = textBox.value.split("/");
+            GLOBALS['birth'] = split[0].substring(1);
+            GLOBALS['survive'] = split[1].substring(1);
+            reset();
+        }
+    }
+}
 
 window.onload = function () {
     GLOBALS['context'] = add_canvas();
